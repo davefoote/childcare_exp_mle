@@ -19,6 +19,28 @@ race_map = {1: False, 2: True, 3: True, 4: True}
 onetwo_binary_map = {1: True, 2: False}
 sex_map = {1: 'Male', 2: 'Female'}
 time_map = {1: 'Hours', 2: 'Days', 3: 'Weeks'}
+state_map = {1: 'Alabama', 2: 'Alaska', 4: 'Arizona', 5: 'Arkansas',
+            6: 'California', 8: 'Colorado', 9: 'Connecticut', 10: 'Delaware',
+            11: 'D.C.', 12: 'Florida', 13: 'Georgia', 15: 'Hawaii',
+            16: 'Idaho', 17: 'Illinois', 18: 'Indiana', 19: 'Iowa',
+            20: 'Kansas', 21: 'Kentucky', 22: 'Louisiana', 23: 'Maine',
+            24: 'Maryland', 25: 'Massachusetts', 26: 'Michigan',
+            27: 'Minnesota', 28: 'Mississippi', 29: 'Missouri', 30: 'Montana',
+            31: 'Nebraska', 32: 'Nevada', 33: 'New Hampshire',
+            34: 'New Jersey', 35: 'New Mexico', 36: 'New York',
+            37: 'North Carolina', 38: 'North Datoka', 39: 'Ohio',
+            40: 'Oklahoma', 41: 'Oregon', 42: 'Pennsylvania',
+            44: 'Rhode Island', 45: 'South Carolina', 46: 'South Dakota',
+            47: 'Tennessee', 48: 'Texas', 49: 'Utah', 50: 'Vermont',
+            51: 'Virginia', 53: 'Washington', 54: 'West Virginia',
+            55: 'Wisconsin', 56: 'Wyoming', 60: 'Puerto Rico and Island Areas',
+            61: 'Foreign Country'}
+southerness_map = {}
+for x in state_map.keys():
+    if x in [1, 5, 12, 13, 21, 22, 28, 37, 45, 47, 48, 51]:
+        southerness_map[x] = True
+    else:
+        southerness_map[x] = False
 
 '''
 Column Groups
@@ -91,6 +113,9 @@ def main():
     rdf['monthly_wage'] = df.iloc[:,4404:4411].sum(axis=1)
     rdf['monthly_job_hrs'] = df['TMWKHRS']
     rdf['ssuid'] = df.ssuid
+    rdf['pid'] = df.PNUM
+    rdf['unique_id'] = [str(r['ssuid']) + str(r['pid']) for i, r in rdf.
+                        iterrows()]
     rdf['monthcode'] = df.monthcode
     rdf['est_hourly_wage'] = rdf.monthly_wage / rdf.monthly_job_hrs
     rdf['BIRTHMONTH'] = df.EDOB_BMONTH
@@ -111,6 +136,8 @@ def main():
     #"south?", "state mandated child:staff ratio", "state regulates family home 
     # daycare"
     rdf['STATE'] = df.tehc_st
+    rdf['SOUTHERN'] = rdf.STATE.map(southerness_map)
+    rdf['STATE'] = rdf.STATE.map(state_map)
     rdf['METRO'] = df.tehc_metro
     rdf['nonwhite'] = df.ERACE.map(race_map)
     rdf['monthly_childcare_expenditure'] = df.TPAYWK * 4
