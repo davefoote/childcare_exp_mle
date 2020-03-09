@@ -35,47 +35,55 @@ def max_likelihood_estimator(guess, f, data):
     
     return p1, p2
 
-def log_lik(x, params, f):
+def mle_beta_vec(beta_vec, *args):
     '''
-    Compute the log likelihood function for data xvalsgiven given distribution
-    that uses 2 parameters and those 2 paramters
+    doin the damn thing (write better comment later)
     '''
-    if len(params) == 2:
-        p0 = params[0]
-        p1 = params[1]
-
-        return np.log(f(x, p0, p1)).sum()
-    if len(params) == 3:
-        p0 = params[0]
-        p1 = params[1]
-        p2 = params[2]
-
-        return np.log(f(x, p0, p1, p2)).sum()
     
-def probits(df, x_cols1, x_cols2, y1, y2):
-    #set up two probit models
-    Y1 = df[y1]
-    Y2 = df[y2]
-    X1 = df[x_cols1]
-    X1 = sm.add_constant(X1)
-    X2 = df[x_cols2]
-    X2 = sm.add_constant(X2)
-    #initiate and fit these models
-    h_mod = Probit(Y1, X1.astype(float))
-    f_mod = Probit(Y2, X2.astype(float))
-    h_mod.fit()
-    f_mod.fit()
-    
-    print('H Probit Summary: ', h_mod.summary())
-    print('F Probit Summary: ', f_mod.summary())
-    
-    return h_mod, f_mod
+    results_uncstr = opt.minimize()
 
 def categorical_split(df):
     cond1 = (df['monthly_childcare_expenditure'] == 0)
     cond2 = (df['monthly_childcare_expenditure'] > 0)
     cond3 = (df['monthly_wage'] > 0)
     cond4 = (df['monthly_wage'] == 0)
-    
+
     return df[cond1 & cond3], df[cond2 & cond3], df[cond4]
+
+def extract_x_matrix(df, xcols):
+    '''
+    inputs: df with data and column names of your x variables
+    output: n x k matrix of x data where n is #observations and k is
+    #of columns
+    '''
     
+    return df[xcols].to_numpy()
+
+def prob_1(x_matrix, beta_vec):
+    '''
+    calculate probability a set of observations is a member of d1, using logit
+    classification
+    '''
+    linear_kernel = x_matrix.dot(beta_vec)
+    rv = np.exp(linear_kernel) / (1 + np.exp(linear_kernel))
+    rv[rv == 1] = .999999
+
+    return rv
+
+def logit_neglog_likelihood(beta_vec, *args):
+    '''
+    calculate the log likelihood that the probability is correct
+    '''
+    xm, probability_now = args
+    p = probability_now(xm, beta_vec)
+    rv = []
+    for x in p:
+        rv.append((x * math.log(x) + (1 - x) * math.log(1 - x)))
+        
+    print(sum(rv))
+
+    return -(sum(rv))
+    
+'''
+Data Summary/Visualization Functions
+'''
