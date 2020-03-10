@@ -32,15 +32,8 @@ def max_likelihood_estimator(guess, f, data):
     p_init = np.array([p1, p2])
     results_uncstr = opt.minimize(f, p_init, args=(data))
     p1, p2 = results_uncstr.x
-    
-    return p1, p2
 
-def mle_beta_vec(beta_vec, *args):
-    '''
-    doin the damn thing (write better comment later)
-    '''
-    
-    results_uncstr = opt.minimize()
+    return p1, p2
 
 def categorical_split(df):
     cond1 = (df['monthly_childcare_expenditure'] == 0)
@@ -59,6 +52,24 @@ def extract_x_matrix(df, xcols):
     
     return df[xcols].to_numpy()
 
+def mle_beta_vec(df, xcols, init_guess, f):
+    '''
+    df = dataframe
+    xcolumn names in list form
+    init_guess in list form
+    criterion function f
+    doin the damn thing (write better comment later)
+    '''
+    d1, d2, d3 = categorical_split(df)
+    d1 = extract_x_matrix(d1, xcols)
+    d2 = extract_x_matrix(d2, xcols)
+    d3 = extract_x_matrix(d3, xcols)
+    data = (d1, d2, d3)
+    
+    results_uncstr = opt.minimize(f, np.array(init_guess), args=data)
+    
+    return results_uncstr.x
+
 def prob_1(x_matrix, beta_vec):
     '''
     calculate probability a set of observations is a member of d1, using logit
@@ -70,6 +81,15 @@ def prob_1(x_matrix, beta_vec):
 
     return rv
 
+def sum_three_criterion(beta_guess, *args):
+    d1, d2, d3 = *args
+    beta_guess = list(beta_guess)
+    beta_vec = np.array(beta_guess)
+    
+    return (logit_neglog_likelihood(beta_vec, d1, prob_1) +
+            logit_neglog_likelihood(beta_vec, d2, prob_1) +
+            logit_neglog_likelihood(beta_vec, d3, prob_1))
+
 def logit_neglog_likelihood(beta_vec, *args):
     '''
     calculate the log likelihood that the probability is correct
@@ -78,11 +98,16 @@ def logit_neglog_likelihood(beta_vec, *args):
     p = probability_now(xm, beta_vec)
     rv = []
     for x in p:
-        rv.append((x * math.log(x) + (1 - x) * math.log(1 - x)))
+        to_add = (x * math.log(x)) + ((1 - x) * math.log(1 - x))
+        print(to_add)
+        if to_add is not np.nan:
+            rv.append(to_add)
+            
+    rv = pd.Series(rv)
         
-    print(sum(rv))
+    print(rv.sum())
 
-    return -(sum(rv))
+    return -(rv.sum())
     
 '''
 Data Summary/Visualization Functions
