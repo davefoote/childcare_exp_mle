@@ -82,13 +82,14 @@ def prob_1(x_matrix, beta_vec):
     return rv
 
 def sum_three_criterion(beta_guess, *args):
-    d1, d2, d3 = *args
-    beta_guess = list(beta_guess)
-    beta_vec = np.array(beta_guess)
+    '''
+    beta_guess comes in as array
+    '''
+    d1, d2, d3 = args
     
-    return (logit_neglog_likelihood(beta_vec, d1, prob_1) +
-            logit_neglog_likelihood(beta_vec, d2, prob_1) +
-            logit_neglog_likelihood(beta_vec, d3, prob_1))
+    return (logit_neglog_likelihood(beta_guess, d1, prob_1) +
+            logit_neglog_likelihood(beta_guess, d2, prob_1) +
+            logit_neglog_likelihood(beta_guess, d3, prob_1))
 
 def logit_neglog_likelihood(beta_vec, *args):
     '''
@@ -99,7 +100,6 @@ def logit_neglog_likelihood(beta_vec, *args):
     rv = []
     for x in p:
         to_add = (x * math.log(x)) + ((1 - x) * math.log(1 - x))
-        print(to_add)
         if to_add is not np.nan:
             rv.append(to_add)
             
