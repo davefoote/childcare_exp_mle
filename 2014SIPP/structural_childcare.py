@@ -35,23 +35,6 @@ def max_likelihood_estimator(guess, f, data):
 
     return p1, p2
 
-def categorical_split(df):
-    cond1 = (df['monthly_childcare_expenditure'] == 0)
-    cond2 = (df['monthly_childcare_expenditure'] > 0)
-    cond3 = (df['monthly_wage'] > 0)
-    cond4 = (df['monthly_wage'] == 0)
-
-    return df[cond1 & cond3], df[cond2 & cond3], df[cond4]
-
-def extract_x_matrix(df, xcols):
-    '''
-    inputs: df with data and column names of your x variables
-    output: n x k matrix of x data where n is #observations and k is
-    #of columns
-    '''
-    
-    return df[xcols].to_numpy()
-
 def mle_beta_vec(df, xcols, init_guess, f):
     '''
     df = dataframe
@@ -70,17 +53,6 @@ def mle_beta_vec(df, xcols, init_guess, f):
     
     return results_uncstr.x
 
-def prob_1(x_matrix, beta_vec):
-    '''
-    calculate probability a set of observations is a member of d1, using logit
-    classification
-    '''
-    linear_kernel = x_matrix.dot(beta_vec)
-    rv = np.exp(linear_kernel) / (1 + np.exp(linear_kernel))
-    rv[rv == 1] = .999999
-
-    return rv
-
 def sum_three_criterion(beta_guess, *args):
     '''
     beta_guess comes in as array
@@ -95,11 +67,12 @@ def logit_neglog_likelihood(beta_vec, *args):
     '''
     calculate the log likelihood that the probability is correct
     '''
-    xm, probability_now = args
-    p = probability_now(xm, beta_vec)
+    y_vec, xm, probability_now = args
+    p = list(probability_now(xm, beta_vec))
+    y_vec = list(y_vec)
     rv = []
-    for x in p:
-        to_add = (x * math.log(x)) + ((1 - x) * math.log(1 - x))
+    for i, x in enumerate(p):
+        to_add = ((x * math.log(x))**y_vec[i] * ((1 - x)**y_vec[i])* math.log(1 - x))
         if to_add is not np.nan:
             rv.append(to_add)
             
@@ -108,6 +81,34 @@ def logit_neglog_likelihood(beta_vec, *args):
     print(rv.sum())
 
     return -(rv.sum())
+
+def prob_1(x_matrix, beta_vec):
+    '''
+    calculate probability a set of observations is a member of d1, using logit
+    classification
+    '''
+    linear_kernel = x_matrix.dot(beta_vec)
+    rv = np.exp(linear_kernel) / (1 + np.exp(linear_kernel))
+    rv[rv == 1] = .999999
+
+    return rv
+
+def categorical_split(df):
+    cond1 = (df['monthly_childcare_expenditure'] == 0)
+    cond2 = (df['monthly_childcare_expenditure'] > 0)
+    cond3 = (df['monthly_wage'] > 0)
+    cond4 = (df['monthly_wage'] == 0)
+
+    return df[cond1 & cond3], df[cond2 & cond3], df[cond4]
+
+def extract_x_matrix(df, xcols):
+    '''
+    inputs: df with data and column names of your x variables
+    output: n x k matrix of x data where n is #observations and k is
+    #of columns
+    '''
+    
+    return df[xcols].to_numpy()
     
 '''
 Data Summary/Visualization Functions
