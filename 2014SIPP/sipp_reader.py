@@ -104,6 +104,18 @@ def lookup_child_ages(df, rdf, birth_cols):
 
         
     return l[0]['age'], l[1]['age'], l[2]['age'], l[3]['age']
+
+def lookup_mean_childcare_exp_instate(df):
+    '''
+    call after creating monthly_childcare_exp column
+    '''
+    rdf = df[['monthly_childcare_expenditure', 'STATE']]
+    map_ = rdf.groupby('STATE').mean()
+    rmap = {}
+    for i, r in map_.iterrows():
+        rmap[i] = r['monthly_childcare_expenditure']
+
+    return df['STATE'].map(rmap)
     
 '''
 EXTRACT and TRANSFORM INTO RETURN DF (rdf)
@@ -153,6 +165,7 @@ def main():
     rdf['has_child_in_daycare'] = df.RDAYCARE.map(onetwo_binary_map)
     rdf['missed_work_for_childcare'] = df.ETIMELOST_TP.map({1: 'Hours', 2: 'Days', 3: 'Weeks'})
     rdf['monthly_childcare_expenditure'] = (df.TPAYWK / 7) * 30.42
+    rdf['mean_childcare_exp_instate'] = lookup_mean_childcare_exp_instate(rdf)
     #yearly income topcoded at 10,000,000,000
     rdf['TOTAL_ANNUAL_PERSONAL_INCOME'] = df.TPTOTINC
     rdf['total_monthly_income'] = rdf.TOTAL_ANNUAL_PERSONAL_INCOME / 12
